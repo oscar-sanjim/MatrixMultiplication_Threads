@@ -15,3 +15,4 @@
 void PrintMatrix(int *mat,int r, int c);
 void Multiplication (int *m1, int *m2, int m1r, int m1c,
                      int m2c, int **m3, int threadNum);
+void InitDiagonal(int **mat, int r, int c);

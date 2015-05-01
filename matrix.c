@@ -28,6 +28,8 @@ void Multiplication (int *m1, int *m2, int m1r, int m1c,
 
     for(int i=0; i<m1r;i++)
     {
+        if(*(*m3+(threadNum*m1r)+i) != 0)
+            *(*m3+(threadNum*m1r)+i) = 0;
         for(int j=0;j<m2r;j++)
         {
             *(*m3+(threadNum*m1r)+i) += *(m1+(m1c*threadNum)+j)*
@@ -38,3 +40,17 @@ void Multiplication (int *m1, int *m2, int m1r, int m1c,
         }
     }
 }
+
+void InitDiagonal(int **mat, int r, int c) {
+    for (int i = 0; i < r; i++) {
+        for (int j = 0; j < c; j++) {
+            if(i == j)
+                *(*mat+(c*i)+j) = -1;
+            else
+                *(*mat+(c*i)+j) = 0;
+        }
+    }
+}
+
+
+
