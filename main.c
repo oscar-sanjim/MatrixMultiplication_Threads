@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include "FileIO.h"
 #include "matrix.h"
+#include <string.h>
 
 #define NUMPARAMS 2
 
@@ -42,7 +43,13 @@ int main(int argc, const char * argv[]) {
         printf("Abnormal termination\n");
         exit (EXIT_FAILURE);
     } else {
-        fp = fopen (argv[2],"r");             /* Open file for read operation */
+        if (strcmp(argv[1],"-o")==0) {
+            fp = fopen (argv[2],"r"); /* Open file for read operation */
+            
+        }
+        else {
+            fp = fopen (argv[1],"r"); /* Open file for read operation */
+        }             
         if (!fp) {                                       /* There is an error */
             printf ("The filename: %s does not exist or is corrupted\n",
                     argv[1]);
@@ -69,9 +76,9 @@ int main(int argc, const char * argv[]) {
             numThreads = m1r;
             
             /* Populate matrixes */
-            m1 = malloc(sizeof(int)*m1r*m1c);
-            m2 = malloc(sizeof(int)*m2r*m2c);
-            m3 = malloc(sizeof(int)*m3r*m3c);
+            m1 = (int*) malloc(sizeof(int)*m1r*m1c);
+            m2 = (int*) malloc(sizeof(int)*m2r*m2c);
+            m3 = (int*) malloc(sizeof(int)*m3r*m3c);
             InitDiagonal(&m3, m3r, m3c);
             
 #ifdef DEBUG
