@@ -23,21 +23,21 @@ void PrintMatrix(int *mat,int r, int c)
     printf("\n");
 }
 void Multiplication (int *m1, int *m2, int m1r, int m1c,
-                     int m2c, int **m3, int threadNum){
+                     int m2c, int **m3, int threadNum,
+                     pthread_mutex_t *key, pthread_cond_t *done) {
     int m2r = m1c;
-
+    
     for(int i=0; i<m1r;i++)
     {
-        if(*(*m3+(threadNum*m1r)+i) != 0)
-            *(*m3+(threadNum*m1r)+i) = 0;
+        int total = 0;
         for(int j=0;j<m2r;j++)
         {
-            *(*m3+(threadNum*m1r)+i) += *(m1+(m1c*threadNum)+j)*
-                                                    (*(m2+(i)+(j*m2c)));
-            
-//            if(threadNum == 0)
-//            printf("%d * % d\n",*(m1+(m1c*threadNum)+j),(*(m2+(i)+(j*m2c))));
+            total += *(m1+(m1c*threadNum)+j)*(*(m2+(i)+(j*m2c)));
         }
+        pthread_mutex_lock(key);
+        *(*m3+(threadNum*m1r)+i) = total;
+        pthread_cond_signal(done);
+        pthread_mutex_unlock(key);
     }
 }
 
