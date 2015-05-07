@@ -1,10 +1,10 @@
-//
-//  main.c
-//  matrices
-//
-//  Created by Jose Carranza on 29/04/15.
-//  Copyright (c) 2015 Jose Carranza. All rights reserved.
-//
+/*
+ * File name: main.c
+ *
+ * Authors:  Oscar Sanchez
+ *           Jose Carranza
+ *           Jacob Rivera
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +34,6 @@ struct condition {
 int main(int argc, const char * argv[]) {
     
     FILE   *fp;                                        /* Pointer to the file */
-    
    
     int code;                                /* Return code from the function */
     
@@ -65,28 +64,29 @@ int main(int argc, const char * argv[]) {
                 printf("Matrixes can't be multiplied...");
                 exit(EXIT_FAILURE);
             }
+                                   /* Obtain the size of the resultant matrix */
             m3r = m1r;
             m3c = m2c;
             numThreads = m1r;
             
             
+                    /* Decide which thread is going to calculate the diagonal */
             srand(time(NULL));
-            
-            theChosenOne = rand();
+            theChosenOne = rand()%numThreads;
 #ifdef DEBUG
             printf("Elected thread: %d\n", theChosenOne);
 #endif
             
-            /* Populate matrixes */
-            m1 = malloc(sizeof(int)*m1r*m1c);
-            m2 = malloc(sizeof(int)*m2r*m2c);
-            m3 = malloc(sizeof(int)*m3r*m3c);
+                                                           /* Create matrixes */
+            m1 = (int *) malloc(sizeof(int)*m1r*m1c);
+            m2 = (int *) malloc(sizeof(int)*m2r*m2c);
+            m3 = (int *) malloc(sizeof(int)*m3r*m3c);
             InitDiagonal(&m3, m3r, m3c);
-            
 #ifdef DEBUG
             printf("\nResulting Matrix initialized: \n");
             PrintMatrix(m3, m3r, m3c);
 #endif
+                                        /* Get the data for the base matrixes */
             for (int i = 0; i < m1r; i++) {
                 for (int j = 0; j < m1c; j++) {
                     *(m1+i*m1c+j) =GetInt(fp);
@@ -105,11 +105,11 @@ int main(int argc, const char * argv[]) {
             PrintMatrix(m2, m2r, m2c);
 #endif
             
-            /* Init syncronization variables */
+                                            /* Init syncronization variables */
             pthread_mutex_init(&cond.key, NULL);
             pthread_cond_init(&cond.done, NULL);
             
-            /* Create threads */
+                                                           /* Create threads */
             int tNum[m3r];
             pthread_t tid[m3r];
             
@@ -122,18 +122,20 @@ int main(int argc, const char * argv[]) {
                     printf("Failure when creating thread a %d\n", code);
             }
             
-            
+                                                     /* Wait for thread cont */
             for(int i=0; i < numThreads; i++)
             {
-                code = pthread_join(tid[i], NULL);    /* Wait for thread cont */
+                code = pthread_join(tid[i], NULL);    
                 if (code != 0)
                     printf("Failure joining thread a %d\n", i);
             }
-      
-            printf("Result: \n");
+
+                                                            /* Print results */
+            printf("Resultant: \n");
             PrintMatrix(m3, m3r, m3c);
-            printf("The sum of the diagonal is: %f\n",diagonalSum);
-            
+            printf("The sum of the diagonal is: %.2f\n",diagonalSum);
+
+                                                     /* Free the used memory */
             pthread_cond_destroy(&cond.done);
             free(m1);
             free(m2);
@@ -147,22 +149,26 @@ int main(int argc, const char * argv[]) {
 }
 
 int Multiply(void *arg){
-    /* Initialize Thread Conditional variables */
-    
-    int *p = (int *) arg;
-    int threadNum = *p;
+
+                                                /* Get the thread identifier */
+    int threadNum = (int) * (int*) arg;
+
+                                        /* Call the library which multiplies */
     Multiplication(m1, m2 ,m1r, m1c, m2c, &m3, threadNum,
                    &cond.key, &cond.done);
 #ifdef DEBUG
     printf("Thread %d finished multiplication\n",threadNum);
 #endif
-    if(threadNum == theChosenOne){
+                              /* If the thread is the elected, start the sum */
+    if(threadNum == theChosenOne) {
         pthread_mutex_lock(&cond.key);
 #ifdef DEBUG
         printf("Thread %d waiting for diagonal values!\n",threadNum);
 #endif
         int select = m3c;
         if (m3r < m3c) select = m3r;
+
+               /* Check each element of the diagonal, wait until it is filed */
         for (int i = 0; i < select; i++) {
             while(*(m3+(i*select)+i) == -1){
 #ifdef DEBUG
@@ -170,7 +176,10 @@ int Multiply(void *arg){
 #endif
                 pthread_cond_wait(&cond.done, &cond.key);
             }
+#ifdef DEBUG
             printf("Adding: %d\n",*(m3+(i*select)+i));
+#endif      
+                                     /* When it is filled, sum the resultant */
             diagonalSum += *(m3+(i*select)+i);
         }
 
@@ -178,6 +187,7 @@ int Multiply(void *arg){
 #ifdef DEBUG
         printf("Diagonal sum = %f\n",diagonalSum);
 #endif
+                                              /* When done, unlock the mutex */
         pthread_mutex_unlock(&cond.key);
     }
     
