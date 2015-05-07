@@ -12,18 +12,19 @@
 #include <pthread.h>
 #include "FileIO.h"
 #include "matrix.h"
-#include <time.h>
+#include <string.h>
 
 #define NUMPARAMS 2
 
 int *m1,*m2,*m3;
 int m1r, m1c, m2r,m2c;              /* # of rows and columns for both matrices*/
 int m3r, m3c;
-int numThreads;
-int theChosenOne;
+int numThreads;                                           /* Number of thread */
 
 
-double diagonalSum = 0;
+
+int diagonalSum = 0;
+int threadsFinished = 0;
 int Multiply(void *arg);
 
 struct condition {
@@ -32,7 +33,6 @@ struct condition {
 } cond;
 
 int main(int argc, const char * argv[]) {
-    
     FILE   *fp;                                        /* Pointer to the file */
     
    
@@ -43,7 +43,13 @@ int main(int argc, const char * argv[]) {
         printf("Abnormal termination\n");
         exit (EXIT_FAILURE);
     } else {
-        fp = fopen (argv[1],"r");             /* Open file for read operation */
+        if (strcmp(argv[1],"-o")==0) {
+            fp = fopen (argv[2],"r"); /* Open file for read operation */
+            
+        }
+        else {
+            fp = fopen (argv[1],"r"); /* Open file for read operation */
+        }             
         if (!fp) {                                       /* There is an error */
             printf ("The filename: %s does not exist or is corrupted\n",
                     argv[1]);
@@ -57,8 +63,8 @@ int main(int argc, const char * argv[]) {
             m2c = GetInt(fp);
             
 #ifdef DEBUG
-            printf("Matrix 1 rows   : %d\nMatrix 1 columns: %d\n", m1r, m1c);
-            printf("Matrix 2 rows   : %d\nMatrix 2 columns: %d\n", m2r, m2c);
+            printf("Matrix 1 rows   : %d\nMatrix 1 columns: %d\n",m1r,m1c);
+            printf("Matrix 2 rows   : %d\nMatrix 2 columns: %d\n",m2r,m2c);
 #endif
                        /* Check if matrixes are compatible for multiplication */
             if (m1c != m2r) {
@@ -69,18 +75,10 @@ int main(int argc, const char * argv[]) {
             m3c = m2c;
             numThreads = m1r;
             
-            
-            srand(time(NULL));
-            
-            theChosenOne = rand();
-#ifdef DEBUG
-            printf("Elected thread: %d\n", theChosenOne);
-#endif
-            
             /* Populate matrixes */
-            m1 = malloc(sizeof(int)*m1r*m1c);
-            m2 = malloc(sizeof(int)*m2r*m2c);
-            m3 = malloc(sizeof(int)*m3r*m3c);
+            m1 = (int*) malloc(sizeof(int)*m1r*m1c);
+            m2 = (int*) malloc(sizeof(int)*m2r*m2c);
+            m3 = (int*) malloc(sizeof(int)*m3r*m3c);
             InitDiagonal(&m3, m3r, m3c);
             
 #ifdef DEBUG
@@ -112,8 +110,7 @@ int main(int argc, const char * argv[]) {
             /* Create threads */
             int tNum[m3r];
             pthread_t tid[m3r];
-            
-            
+
             for(int i=0; i< m3r; i++) {
                 tNum[i] = i;
                 code = pthread_create(&tid[i], NULL,(void *) Multiply,
@@ -122,17 +119,15 @@ int main(int argc, const char * argv[]) {
                     printf("Failure when creating thread a %d\n", code);
             }
             
-            
             for(int i=0; i < numThreads; i++)
             {
                 code = pthread_join(tid[i], NULL);    /* Wait for thread cont */
                 if (code != 0)
                     printf("Failure joining thread a %d\n", i);
             }
-      
             printf("Result: \n");
             PrintMatrix(m3, m3r, m3c);
-            printf("The sum of the diagonal is: %f\n",diagonalSum);
+            printf("The sum of the diagonal is: %d\n",diagonalSum);
             
             pthread_cond_destroy(&cond.done);
             free(m1);
@@ -151,36 +146,37 @@ int Multiply(void *arg){
     
     int *p = (int *) arg;
     int threadNum = *p;
-    Multiplication(m1, m2 ,m1r, m1c, m2c, &m3, threadNum,
-                   &cond.key, &cond.done);
+    Multiplication(m1, m2 ,m1r, m1c, m2c, &m3, threadNum);
+    
+    pthread_mutex_lock(&cond.key);
+    
+    threadsFinished++;
 #ifdef DEBUG
     printf("Thread %d finished multiplication\n",threadNum);
 #endif
-    if(threadNum == theChosenOne){
-        pthread_mutex_lock(&cond.key);
+    if(threadNum == numThreads-1){
 #ifdef DEBUG
         printf("Thread %d waiting for diagonal values!\n",threadNum);
 #endif
-        int select = m3c;
-        if (m3r < m3c) select = m3r;
-        for (int i = 0; i < select; i++) {
-            while(*(m3+(i*select)+i) == -1){
-#ifdef DEBUG
-                printf("Blocked\n");
-#endif
-                pthread_cond_wait(&cond.done, &cond.key);
-            }
-            printf("Adding: %d\n",*(m3+(i*select)+i));
-            diagonalSum += *(m3+(i*select)+i);
+        
+        int n = 0;
+        while (*(m3+(n*m3c)+n) == -1) {
+            pthread_cond_wait(&cond.done, &cond.key);
+            n++;
         }
-
-       
 #ifdef DEBUG
-        printf("Diagonal sum = %f\n",diagonalSum);
+        printf("All values of the diagonal are available\n");
+        printf("Starting diagonal calculation...\n");
 #endif
-        pthread_mutex_unlock(&cond.key);
+        for (int i = 0; i<numThreads; i++) {
+            diagonalSum += *(m3+(i*m3c)+i);
+        }
+#ifdef DEBUG
+        printf("Diagonal sum = %d\n",diagonalSum);
+#endif
     }
-    
+    pthread_cond_signal(&cond.done);
+    pthread_mutex_unlock(&cond.key);
 #ifdef DEBUG
     printf("Thread: %d returning...\n",threadNum);
 #endif
