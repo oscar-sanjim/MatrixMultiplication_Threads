@@ -8,22 +8,26 @@ Release Version
 
 	- Compile all the .c files including the -pthread command:
 
-			gcc -pthread *.c 
+			gcc -std=c11 -pthread *.c -o ex
+						or 
+			clang -pthread *.c -o ex
 
 	- To execute, just run the .out file and include the input file:
 
-			./a.out test.txt
+			./ex test.txt
 			
 
 Debug Version
 
 	- Compile all the .c files including the -pthread command and definning the DEBUG macro:
 
-			gcc -pthread -DDEBUG *.c 
+			gcc -std=c11 -pthread -DDEBUG *.c -o ex 
+						or 
+			clang -pthread *.c -o ex
 
 	- To execute, just run the .out file and include the input file:
 
-			./a.out test.txt
+			./ex test.txt
 
 
 When reading from the input file, the first line represents the matrixes size
