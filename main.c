@@ -170,17 +170,17 @@ int Multiply(void *arg){
 
                /* Check each element of the diagonal, wait until it is filed */
         for (int i = 0; i < select; i++) {
-            while(*(m3+(i*select)+i) == -1){
+            while(*(m3+(i*m3c)+i) == -1){
 #ifdef DEBUG
                 printf("Blocked\n");
 #endif
                 pthread_cond_wait(&cond.done, &cond.key);
             }
 #ifdef DEBUG
-            printf("Adding: %d\n",*(m3+(i*select)+i));
+            printf("Adding: %d\n",*(m3+(i*m3c)+i));
 #endif      
                                      /* When it is filled, sum the resultant */
-            diagonalSum += *(m3+(i*select)+i);
+            diagonalSum += *(m3+(i*m3c)+i);
         }
 
        

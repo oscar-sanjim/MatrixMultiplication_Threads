@@ -30,7 +30,7 @@ void Multiplication (int *m1, int *m2, int m1r, int m1c,
                      pthread_mutex_t *key, pthread_cond_t *done) {
     int m2r = m1c;
                           /* First loop goes through the elements in the row */
-    for(int i=0; i<m1r;i++)
+    for(int i=0; i<m2c;i++)
     {
         int total = 0;
                                         /* Second loop makes the calculation */
@@ -39,8 +39,9 @@ void Multiplication (int *m1, int *m2, int m1r, int m1c,
             total += *(m1+(m1c*threadNum)+j)*(*(m2+(i)+(j*m2c)));
         }
                        /* Lock the matrix, and assign the value to the space */
+        printf("thread: %d: %d\n",threadNum,total );
         pthread_mutex_lock(key);
-        *(*m3+(threadNum*m1r)+i) = total;
+        *(*m3+(threadNum*m2c)+i) = total;
         pthread_cond_signal(done);
         pthread_mutex_unlock(key);
     }
