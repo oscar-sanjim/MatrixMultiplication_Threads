@@ -1,0 +1,55 @@
+Team members:
+
+	Jose Antonio Carranza
+	Jacob Rivera
+	Oscar Sánchez 
+
+Release Version
+
+	- Compile all the .c files including the -pthread command:
+
+			gcc -pthread *.c 
+
+	- To execute, just run the .out file and include the input file:
+
+			./a.out test.txt
+			
+
+Debug Version
+
+	- Compile all the .c files including the -pthread command and definning the DEBUG macro:
+
+			gcc -pthread -DDEBUG *.c 
+
+	- To execute, just run the .out file and include the input file:
+
+			./a.out test.txt
+
+
+When reading from the input file, the first line represents the matrixes size
+and the second and third lines are the matrixes values
+
+
+	4 3 3 4
+
+	1 2 3 4 5 6 7 8 9 10 11 12
+
+	1 2 3 4 5 6 7 8 9 10 11 12
+	
+
+	This is two matrixes
+
+	MatrixA
+
+	1    2    3  
+	4    5    6 
+	7	 8	  9
+   10   11   12
+
+
+
+   MatrixB
+
+   1   2   3   4
+   5   6   7   8
+   9  10  11  12
