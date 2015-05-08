@@ -39,7 +39,9 @@ void Multiplication (int *m1, int *m2, int m1r, int m1c,
             total += *(m1+(m1c*threadNum)+j)*(*(m2+(i)+(j*m2c)));
         }
                        /* Lock the matrix, and assign the value to the space */
+#ifdef DEBUG
         printf("thread: %d: %d\n",threadNum,total );
+#endif
         pthread_mutex_lock(key);
         *(*m3+(threadNum*m2c)+i) = total;
         pthread_cond_signal(done);
