@@ -13,12 +13,14 @@
 #include <pthread.h>
 
 
-#endif 
+#endif
 
-void PrintMatrix(int *mat,int r, int c);
-void Multiplication (int *m1, int *m2, int m1r, int m1c,
-                     int m2c, int **m3, int threadNum,
-                     pthread_mutex_t *key, pthread_cond_t *done);
+void PrintMatrix(int *mat, int r, int c);
+
+void Multiplication(int *m1, int *m2, int m1r, int m1c,
+                    int m2c, int **m3, int threadNum,
+                    pthread_mutex_t *key, pthread_cond_t *done);
+
 void InitDiagonal(int **mat, int r, int c);
 
 
